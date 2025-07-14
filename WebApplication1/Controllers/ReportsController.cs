@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using WebApplication1.DTO;
 
 namespace WebApplication1.Controllers
 {
