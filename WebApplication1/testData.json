@@ -1,0 +1,5 @@
+{
+  "reportName": "Report",
+  "reportData": "[{ \"Description\": \"Sample Item\", \"Price\": 19.99, \"Qty\": 3, \"Total\": 59.97 }]",
+  "reportArgs": "[\"invoice 2025\"]"
+}
