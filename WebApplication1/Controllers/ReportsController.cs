@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Reporting.NETCore;
 using Newtonsoft.Json;
 using System;
@@ -12,7 +13,16 @@ namespace WebApplication1.Controllers
 {
     public class ReportsController : Controller
     {
-       
+
+
+        private readonly IConfiguration _config;
+
+        public ReportsController (IConfiguration config)
+        {
+            _config = config;
+
+        }
+
 
         [HttpPost]
         [Route("Reports/viewer")]
@@ -73,6 +83,24 @@ namespace WebApplication1.Controllers
                    
 
             localReport.DataSources.Add(new ReportDataSource(ReportDataSourceName , reportDataTable));
+
+
+            var HospitalName = _config.GetSection("ReportSettings")["HospitalName"];
+            var LogoPath = _config.GetSection("ReportSettings")["LogoPath"];
+
+
+            DataTable headerDataTable = new DataTable();
+            headerDataTable.Columns.Add("HospitalName", typeof(string));
+            headerDataTable.Columns.Add("ImagePath", typeof(string));
+            headerDataTable.Columns.Add("ImageByte", typeof(byte[]));
+
+            headerDataTable.Rows.Add(HospitalName , "file:///D:/Images/logo.png", System.IO.File.ReadAllBytes(LogoPath) );
+
+            localReport.DataSources.Add(new ReportDataSource("HeaderData", headerDataTable));
+
+
+
+
 
             if (reportArgs == null || !reportArgs.Any())
             {
