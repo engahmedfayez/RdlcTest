@@ -33,7 +33,9 @@ namespace WebApplication1.Controllers
              const string ReportDataSourceName = "Items";
              const string ReportFormat = "PDF";
              const string MimeTypePdf = "application/pdf";
-                       
+             var HospitalName = _config.GetSection("ReportSettings")["HospitalName"];
+             var LogoPath     = _config.GetSection("ReportSettings")["LogoPath"];
+
 
 
             // 2. Load RDLC report
@@ -50,7 +52,16 @@ namespace WebApplication1.Controllers
             localReport.ReportPath = reportPath;
 
 
+            #region Set Header Data
 
+            DataTable headerDataTable = new DataTable();
+            headerDataTable.Columns.Add("HospitalName", typeof(string));
+            headerDataTable.Columns.Add("ImageByte"   , typeof(byte[]));
+
+            headerDataTable.Rows.Add(HospitalName, System.IO.File.ReadAllBytes(LogoPath));
+            localReport.DataSources.Add(new ReportDataSource("HeaderData", headerDataTable));
+
+            #endregion
 
 
 
@@ -59,64 +70,43 @@ namespace WebApplication1.Controllers
             string ReportArgsJson = reportInput.ReportArgs;
             DataTable reportDataTable;
             List<string> reportArgs;
+            ReportParameter[] parameters;
 
 
             try
             {   // Convert JSON data to DataTable and List
                 reportDataTable = JsonConvert.DeserializeObject<DataTable>(ReportDataJson);
+                if (reportDataTable == null || reportDataTable.Rows.Count == 0)
+                {
+                    return BadRequest("Report data cannot be null or empty.");
+                }
+                localReport.DataSources.Add(new ReportDataSource(ReportDataSourceName, reportDataTable));
+
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal Server Error [Report Data] : {ex.Message}");
             }
-
+                       
             try
             {
                 reportArgs = JsonConvert.DeserializeObject<List<string>>(ReportArgsJson);
+                if (reportArgs == null || !reportArgs.Any())
+                {
+                    return BadRequest("Report arguments cannot be null or empty.");
+                }
+                // Convert list to ReportParameter array
+                  parameters = reportArgs
+                 .Select((value, index) => new ReportParameter($"arg{index}", value))
+                 .ToArray();
+
 
             }
             catch (Exception ex)
             {
 
                 return StatusCode(500, $"Internal Server Error [Report Args] : {ex.Message}");
-            }
-                   
-
-            localReport.DataSources.Add(new ReportDataSource(ReportDataSourceName , reportDataTable));
-
-
-            var HospitalName = _config.GetSection("ReportSettings")["HospitalName"];
-            var LogoPath = _config.GetSection("ReportSettings")["LogoPath"];
-
-
-            DataTable headerDataTable = new DataTable();
-            headerDataTable.Columns.Add("HospitalName", typeof(string));
-            headerDataTable.Columns.Add("ImagePath", typeof(string));
-            headerDataTable.Columns.Add("ImageByte", typeof(byte[]));
-
-            headerDataTable.Rows.Add(HospitalName , "file:///D:/Images/logo.png", System.IO.File.ReadAllBytes(LogoPath) );
-
-            localReport.DataSources.Add(new ReportDataSource("HeaderData", headerDataTable));
-
-
-
-
-
-            if (reportArgs == null || !reportArgs.Any())
-            {
-                return BadRequest("Report arguments cannot be null or empty.");
-            }
-
-                      
-
-
-            // Convert list to ReportParameter array
-            ReportParameter[] parameters = reportArgs
-             .Select((value, index) => new ReportParameter($"arg{index}", value))
-             .ToArray();
-
-
-
+            }  
             try
             {
                 // 5. Render to PDF
@@ -127,11 +117,9 @@ namespace WebApplication1.Controllers
             catch (Exception ex)
             {
 
-                return StatusCode(500, "An unexpected error occurred while generating the report.");
+                return StatusCode(500, "An unexpected error occurred while generating the report [Exception Details] ." + ex.Message);
             }
              
-
-
         }
 
     }
