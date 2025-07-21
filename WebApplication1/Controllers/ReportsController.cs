@@ -23,6 +23,7 @@ namespace WebApplication1.Controllers
 
         [HttpPost]
         [Route("Reports/viewer")]
+        
         public IActionResult GenerateRDLCReport([FromBody] ReportInput reportInput)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -53,7 +54,8 @@ namespace WebApplication1.Controllers
             headerDataTable.Columns.Add("HospitalName", typeof(string));
             headerDataTable.Columns.Add("ImageByte", typeof(byte[]));
             // Add a row with the hospital name and logo
-            headerDataTable.Rows.Add(HospitalName, System.IO.File.ReadAllBytes(LogoPath));
+            headerDataTable.Rows.Add(HospitalName, System.IO.File.ReadAllBytes(AppDomain.CurrentDomain.BaseDirectory+ LogoPath));
+            
             localReport.DataSources.Add(new ReportDataSource("HeaderData", headerDataTable));
 
             #endregion
